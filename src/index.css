@@ -1,0 +1,223 @@
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+.react-sortable-treeview {
+  position: relative;
+  height: 100%;
+}
+.react-sortable-treeview .rstw-list {
+  margin: 0;
+  padding: 0 0 0 40px;
+  list-style-type: none;
+}
+.react-sortable-treeview > .rstw-list {
+  padding: 0;
+}
+
+.rstw-node {
+  position: relative;
+  width: fit-content;
+}
+.rstw-node.is-dragging .rstw-list {
+  pointer-events: none;
+}
+
+.rstw-node.is-dragging .rstw-node .rstw-row:before {
+  content: ' ';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: #87ceeb;
+  border: 1px dashed #4682b4;
+  border-radius: 5px;
+  z-index: 10;
+  margin-top: -10px;
+}
+
+.rstw-node.cannot-drop .rstw-node .rstw-row:before {
+  background: #e45372;
+  border: 1px dashed #e45372;
+}
+
+.rstw-node.dragging:after {
+  content: ' ';
+  position: absolute;
+  width: 2px;
+  background-color: black;
+  height: 100%;
+  margin-left: -25px;
+  top: 0;
+}
+
+.rstw-node-icon {
+  cursor: pointer;
+  border: 2px solid;
+  border-radius: 50%;
+  position: absolute;
+  margin-left: -36px;
+  background-color: white;
+  margin-top: 18px;
+  width: 20px;
+  height: 20px;
+}
+.rstw-drag-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  pointer-events: none;
+}
+.rstw-drag-layer > .rstw-list {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 0;
+}
+.rstw-icon {
+  width: 20px;
+  height: 20px;
+  background-color: transparent;
+  background-position: center center;
+  background-repeat: no-repeat;
+  position: absolute;
+}
+.rstw-icon:before {
+  content: '-';
+  display: inline-block;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+.icon-plus-gray {
+  background-image: url('./assets/icon-plus-gray.svg');
+}
+.icon-minus-gray {
+  background-image: url('./assets//icon-minus-gray.svg');
+}
+
+.icon-handler {
+  background-image: url('./assets/handler.svg');
+  width: 25px;
+  height: 25px;
+  background-color: transparent;
+  background-position: center center;
+  background-repeat: no-repeat;
+  margin-right: 10px;
+}
+
+.rstw-node.is-dragging .rstw-node-icon,
+.rstw-node.is-dragging {
+  opacity: 0;
+}
+
+.rstw-placementArrow {
+  margin-top: 20px;
+  top: 0;
+  bottom: 0;
+  margin-left: -60px;
+  margin-top: 25px;
+  position: absolute;
+  z-index: 1000;
+}
+
+.rstw-node {
+  display: flex;
+  height: 60px;
+  position: relative;
+}
+
+.rstw-row {
+  margin: 10px 10px 10px 0;
+  height: 42px;
+}
+
+.rstw-default-node {
+  position: relative;
+  background: lightgray;
+  display: flex;
+  height: 100%;
+  padding: 0px 10px;
+  align-items: center;
+  border: 1px solid;
+}
+
+.rstw-lines {
+  width: 40px;
+  position: relative;
+  height: 100%;
+}
+
+.rstw-halfVerticalLine:after {
+  content: '';
+  width: 2px;
+  height: 50%;
+  background: black;
+  position: absolute;
+  margin-left: 15px;
+}
+
+.rstw-fullVerticalLine:after {
+  content: '';
+  width: 2px;
+  height: 100%;
+  background: black;
+  position: absolute;
+  margin-left: 15px;
+}
+
+.rstw-fullHotizontalLine:before {
+  content: '';
+  width: 25px;
+  height: 2px;
+  background: black;
+  position: absolute;
+  margin-left: 15px;
+  margin-top: 29px;
+}
+
+.rstw-depthLine {
+  height: 100%;
+}
+
+.rstw-showdepthLine:before {
+  content: '';
+  width: 2px;
+  height: 100%;
+  background: black;
+  position: absolute;
+  margin-left: 15px;
+}
+
+.rstw-parentLine:after {
+  content: '';
+  width: 2px;
+  height: 8px;
+  background: black;
+  position: absolute;
+  margin-left: 15px;
+  bottom: 0;
+}
+
+.rstw-node-handler {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 5px;
+  cursor: pointer;
+}
+
+.rstw-drag-layer .parentLine:after,
+.rstw-drag-layer .rstw-node-icon {
+  opacity: 0;
+}
+.rstw-node.is-dragging {
+  cursor: move;
+}
+
+.rstw-node.cannot-drop {
+  cursor: not-allowed;
+}
