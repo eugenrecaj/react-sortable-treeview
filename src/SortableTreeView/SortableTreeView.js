@@ -127,7 +127,7 @@ class SortableTreeView extends Component {
     type,
     treeData = this.state.treeData
   ) => {
-    const { childrenProp, canDrop, idProp, onMoveNode } = this.props;
+    const { childrenProp, canDrop, idProp } = this.props;
     const dragNodeSize = this.getNodeDepth(dragNode);
 
     const realPathTo = this.getRealNextPath(pathFrom, pathTo, dragNodeSize);
@@ -324,7 +324,7 @@ class SortableTreeView extends Component {
     }
 
     if (isDirty) {
-      onChange({ treeData });
+      onChange(treeData);
     }
   };
 

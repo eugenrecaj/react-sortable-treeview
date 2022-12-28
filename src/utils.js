@@ -72,7 +72,7 @@ export const listWithChildren = (list, childrenProp) => {
   const addChildren = list.map((item) => {
     return {
       ...item,
-      isCollapsed: true,
+      isCollapsed: item.isCollapsed || true,
       [childrenProp]: item[childrenProp]
         ? listWithChildren(item[childrenProp], childrenProp)
         : [],
