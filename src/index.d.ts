@@ -6,10 +6,7 @@ declare module 'react-sortable-treeview' {
   export default class SortableTreeView extends React.Component<{
     childrenProp?: string; // 'children' default
     className?: string;
-    canDrop?: (arg: {
-      dragItem: Node;
-      destinationParent: Node | null;
-    }) => boolean;
+    canDrop?: (arg: { node: Node; destinationParent: Node | null }) => boolean;
     group?: number | string; // 'random string' default
     handler?: React.ReactNode;
     showDragHandler?: boolean; // 'true' default

@@ -138,7 +138,7 @@ class SortableTreeView extends Component {
       realPathTo.length > pathTo.length ? pathTo : pathTo.slice(0, -1);
     const destinationParent = this.getNodeByPath(destinationPath);
 
-    const canNodeDrop = canDrop({ dragNode, destinationParent });
+    const canNodeDrop = canDrop({ node: dragNode, destinationParent });
 
     const cannotDropParentIntoChild = pathFrom.every(
       (path, index) => path === pathTo[index]
@@ -387,12 +387,15 @@ class SortableTreeView extends Component {
   };
 
   getSplicePath = (path, options = {}) => {
+    const { childrenProp } = this.props;
     const splicePath = {};
     const numToRemove = options.numToRemove || 0;
     const treeDataToInsert = options.treeDataToInsert || [];
 
     if (treeDataToInsert.length) {
-      treeDataToInsert.forEach(addDepthToChildren(path.length - 1));
+      treeDataToInsert.forEach(
+        addDepthToChildren(path.length - 1, childrenProp)
+      );
     }
 
     const lastIndex = path.length - 1;
@@ -603,13 +606,13 @@ class SortableTreeView extends Component {
     const nodePath = this.getPathById(node[idProp]);
 
     function changeCollapsed(obj, isCollapsed) {
-      if (obj.children) {
-        for (let i = 0; i < obj.children.length; i++) {
+      if (obj[childrenProp]) {
+        for (let i = 0; i < obj[childrenProp].length; i++) {
           if (!obj.isCollapsed) {
             obj.isCollapsed = true;
           }
 
-          changeCollapsed(obj.children[i], isCollapsed);
+          changeCollapsed(obj[childrenProp][i], isCollapsed);
         }
       }
     }
@@ -708,7 +711,7 @@ class SortableTreeView extends Component {
     const { treeData, dragNode } = this.state;
     const options = this.getNodeOptions();
 
-    const flatData = flatDataArray([], treeData);
+    const flatData = flatDataArray(treeData, childrenProp);
 
     const treeWithoutCollapsedChildren = withoutCollapsedChildren(
       flatData,
