@@ -79,7 +79,7 @@ export const listWithChildren = (list, childrenProp) => {
     };
   });
 
-  addChildren.forEach(addDepthToChildren(0));
+  addChildren.forEach(addDepthToChildren(0, childrenProp));
 
   return addChildren;
 };
@@ -98,16 +98,22 @@ export const getAllNonEmptyNodesIds = (items, { idProp, childrenProp }) => {
   return ids.concat(childrenIds);
 };
 
-export const addDepthToChildren = (d) => (o) => {
+export const addDepthToChildren = (d, childrenProp) => (o) => {
   o.depth = d;
-  (o.children || []).forEach(addDepthToChildren(d + 1));
+  (o[childrenProp] || []).forEach(addDepthToChildren(d + 1, childrenProp));
 };
 
-export const flatDataArray = (into, node) => {
-  if (node == null) return into;
-  if (Array.isArray(node)) return node.reduce(flatDataArray, into);
-  into.push(node);
-  return flatDataArray(into, node.children);
+export const flatDataArray = (arr, childrenProp) => {
+  return arr
+    ? arr.reduce(
+        (result, item) => [
+          ...result,
+          { ...item },
+          ...flatDataArray(item[childrenProp], childrenProp),
+        ],
+        []
+      )
+    : [];
 };
 
 export const getTreeFromFlatData = ({
@@ -115,6 +121,7 @@ export const getTreeFromFlatData = ({
   getKey = (node) => node.id,
   getParentKey = (node) => node.parentId,
   rootKey = '0',
+  childrenProp = 'children',
 }) => {
   if (!flatData) {
     return [];
@@ -140,7 +147,9 @@ export const getTreeFromFlatData = ({
     if (parentKey in childrenToParents) {
       return {
         ...parent,
-        children: childrenToParents[parentKey].map((child) => trav(child)),
+        [childrenProp]: childrenToParents[parentKey].map((child) =>
+          trav(child)
+        ),
       };
     }
 
@@ -154,8 +163,9 @@ export const withoutCollapsedChildren = (flatItems, childrenProp) => {
   const expandedNodes = [];
   flatItems.map((wcc) => {
     const isChildPrentCollapsed = flatItems.find((fd) =>
-      fd[childrenProp].includes(wcc)
+      fd[childrenProp].some((child) => child.id === wcc.id)
     );
+
     if (!isChildPrentCollapsed?.isCollapsed) {
       expandedNodes.push(wcc);
     }
