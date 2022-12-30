@@ -1,6 +1,7 @@
 import React from 'react';
 
 import SortableTreeView from '../SortableTreeView';
+import './index.css';
 
 export default {
   title: 'Example/SortableTreeView',

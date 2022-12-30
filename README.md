@@ -2,7 +2,7 @@
 
 ## Getting started
 
-Install `react-sortable-treeview` using npm.
+Install `react-sortable-treeview`.
 
 ```sh
 # NPM
@@ -108,6 +108,75 @@ export const TreeView = () => {
 
 ## Helper Functions
 
-Need a hand turning your flat data into nested tree data?
-
 - **`getTreeFromFlatData`**: Convert flat data (like that from a database) into nested tree data.
+- **`getFlatDataFromTree`**: Convert tree data into flat data.
+
+## More Usage
+
+```jsx
+import React, { useState } from 'react';
+import SortableTreeView from 'react-sortable-treeview';
+
+const nodeStyle = {
+  position: 'relative',
+  background: 'orange',
+  display: 'flex',
+  height: '100%',
+  padding: '0 10px',
+  alignItems: 'center',
+};
+
+export const TreeView = () => {
+  const [treeData, setTreeData] = useState([...]);
+
+  const customNode = ({ node, dragHandler }) => (
+    <div style={nodeStyle}>
+      {dragHandler}
+      <span>{node.label}</span>
+      <select style={{ marginLeft: '10px' }} defaultValue='Car'>
+        <option value='Car'>Car</option>
+        <option value='Plane'>Plane</option>
+      </select>
+    </div>
+  );
+
+  return (
+    <div style={{ height: '100%' }}>
+      <SortableTreeView
+        treeData={treeData}
+        renderNode={customNode}
+        onChange={(treeData) => setTreeData(treeData)}
+      />
+    </div>
+  );
+};
+```
+
+```jsx
+import React, { useState } from 'react';
+import SortableTreeView from 'react-sortable-treeview';
+
+const handlerStyles = {
+  width: '25px',
+  height: '25px',
+  background: 'steelblue',
+  cursor: 'move',
+  borderRadius: '50%',
+  marginRight: '10px',
+};
+
+export const TreeView = () => {
+  const [treeData, setTreeData] = useState([...]);
+
+  return (
+    <div style={{ height: '100%' }}>
+      <SortableTreeView
+        treeData={treeData}
+        showDragHandler
+        handler={<div style={handlerStyles} />}
+        onChange={(treeData) => setTreeData(treeData)}
+      />
+    </div>
+  );
+};
+```

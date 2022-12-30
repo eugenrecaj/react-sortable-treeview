@@ -64,7 +64,7 @@ export const getTotalScroll = (elem) => {
 
 export const getTransformProps = (x, y) => {
   return {
-    transform: 'translate(' + x + 'px, ' + y + 'px)',
+    transform: 'translate(' + x + 'px, ' + (y - 30) + 'px)',
   };
 };
 
@@ -103,13 +103,13 @@ export const addDepthToChildren = (d, childrenProp) => (o) => {
   (o[childrenProp] || []).forEach(addDepthToChildren(d + 1, childrenProp));
 };
 
-export const flatDataArray = (arr, childrenProp) => {
+export const getFlatDataFromTree = (arr, childrenProp) => {
   return arr
     ? arr.reduce(
         (result, item) => [
           ...result,
           { ...item },
-          ...flatDataArray(item[childrenProp], childrenProp),
+          ...getFlatDataFromTree(item[childrenProp], childrenProp),
         ],
         []
       )
