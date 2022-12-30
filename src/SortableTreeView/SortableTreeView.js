@@ -9,12 +9,10 @@ import '../index.css';
 
 import {
   closest,
-  getOffsetRect,
-  getTotalScroll,
   getTransformProps,
   listWithChildren,
   addDepthToChildren,
-  flatDataArray,
+  getFlatDataFromTree,
   withoutCollapsedChildren,
 } from '../utils';
 
@@ -498,6 +496,18 @@ class SortableTreeView extends Component {
 
   isCollapsed = (node) => node.isCollapsed;
 
+  onDragScroll = (event) => {
+    const virtualTree = document.querySelector('.rstw-virtualTree');
+    const { clientY } = event;
+    const { scrollTop, clientHeight } = virtualTree;
+
+    if (clientY <= scrollTop && scrollTop > 0) {
+      virtualTree.scrollTop -= 10;
+    } else if (clientHeight - clientY <= 10) {
+      virtualTree.scrollTop += 10;
+    }
+  };
+
   onDragStart = (e, node) => {
     const { onDragStateChanged } = this.props;
     if (e) {
@@ -541,13 +551,10 @@ class SortableTreeView extends Component {
       '.rstw-' + group + ' .rstw-drag-layer > .rstw-list'
     );
 
-    if (!this.elCopyStyles) {
-      const offset = getOffsetRect(this.el);
-      const scroll = getTotalScroll(this.el);
+    this.onDragScroll(e);
 
+    if (!this.elCopyStyles) {
       this.elCopyStyles = {
-        marginTop: offset.top - clientY - scroll.top,
-        marginLeft: offset.left - clientX - scroll.left,
         ...transformProps,
       };
     } else {
@@ -669,9 +676,9 @@ class SortableTreeView extends Component {
 
     return (
       <div className='rstw-drag-layer'>
-        <ol className='rstw-list' style={listStyles}>
+        <div className='rstw-list' style={listStyles}>
           <SortableTreeViewNode node={dragNode} options={options} isCopy />
-        </ol>
+        </div>
       </div>
     );
   };
@@ -711,7 +718,7 @@ class SortableTreeView extends Component {
     const { treeData, dragNode } = this.state;
     const options = this.getNodeOptions();
 
-    const flatData = flatDataArray(treeData, childrenProp);
+    const flatData = getFlatDataFromTree(treeData, childrenProp);
 
     const treeWithoutCollapsedChildren = withoutCollapsedChildren(
       flatData,
@@ -732,6 +739,7 @@ class SortableTreeView extends Component {
       >
         <Virtuoso
           style={{ height }}
+          className='rstw-virtualTree'
           data={treeWithoutCollapsedChildren}
           itemContent={(index, node) => {
             const { isNodeLastChild } = this.isNodeLast(node);

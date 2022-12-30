@@ -1,5 +1,5 @@
 import SortableTreeView from './SortableTreeView';
-import { getTreeFromFlatData } from './utils';
+import { getTreeFromFlatData, getFlatDataFromTree } from './utils';
 
 export default SortableTreeView;
-export { getTreeFromFlatData };
+export { getTreeFromFlatData, getFlatDataFromTree };
