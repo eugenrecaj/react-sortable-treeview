@@ -29,6 +29,7 @@ class SortableTreeView extends Component {
       isDirty: false,
       canDrop: true,
       onMoveData: null,
+      toggleNode: null,
     };
 
     this.el = null;
@@ -47,12 +48,13 @@ class SortableTreeView extends Component {
     handler: PropTypes.node,
     showDragHandler: PropTypes.bool,
     idProp: PropTypes.string,
-    treeData: PropTypes.array,
+    treeData: PropTypes.array.isRequired,
     onChange: PropTypes.func,
     renderNode: PropTypes.func,
     draggable: PropTypes.bool,
     showLines: PropTypes.bool,
     onMoveNode: PropTypes.func,
+    onVisibilityToggle: PropTypes.func,
     onDragStateChanged: PropTypes.func,
     height: PropTypes.string,
   };
@@ -67,6 +69,7 @@ class SortableTreeView extends Component {
     onDragStateChanged: () => {},
     renderNode: () => null,
     draggable: true,
+    onVisibilityToggle: null,
     showDragHandler: false,
     showLines: true,
     height: '100%',
@@ -468,7 +471,7 @@ class SortableTreeView extends Component {
       showLines,
       handler,
     } = this.props;
-    const { dragNode, destinationPlacement, canDrop } = this.state;
+    const { dragNode, destinationPlacement, canDrop, toggledNode } = this.state;
 
     return {
       dragNode,
@@ -482,6 +485,7 @@ class SortableTreeView extends Component {
       draggable,
       showLines,
       handler,
+      toggledNode,
 
       onDragStart: this.onDragStart,
       onMouseEnter: this.onMouseEnter,
@@ -607,9 +611,9 @@ class SortableTreeView extends Component {
     this.moveNode({ dragNode, pathFrom, pathTo });
   };
 
-  onToggleCollapse = (node, isGetter) => {
+  onToggleCollapse = async (node, isGetter) => {
     let { treeData } = this.state;
-    const { childrenProp, idProp } = this.props;
+    const { childrenProp, idProp, onVisibilityToggle } = this.props;
     const nodePath = this.getPathById(node[idProp]);
 
     function changeCollapsed(obj, isCollapsed) {
@@ -632,6 +636,12 @@ class SortableTreeView extends Component {
       ...node,
     };
 
+    if (node.hasChildren) {
+      this.setState({ toggledNode });
+      console.log(toggledNode);
+      await onVisibilityToggle(toggledNode, toggledNode.isCollapsed);
+    }
+
     const insertPath = this.getSplicePath(nodePath, {
       numToRemove: 1,
       treeDataToInsert: [toggledNode],
@@ -641,9 +651,10 @@ class SortableTreeView extends Component {
     treeData = update(treeData, insertPath);
 
     if (isGetter) {
+      this.setState({ toggledNode: null });
       return treeData;
     } else {
-      this.setState({ treeData });
+      this.setState({ treeData, toggledNode: null });
     }
   };
 
@@ -717,6 +728,8 @@ class SortableTreeView extends Component {
     const { group, className, childrenProp, height } = this.props;
     const { treeData, dragNode } = this.state;
     const options = this.getNodeOptions();
+
+    console.log(treeData);
 
     const flatData = getFlatDataFromTree(treeData, childrenProp);
 

@@ -1,6 +1,9 @@
-import React from 'react';
+import { node } from 'prop-types';
+import React, { useState } from 'react';
 
 import SortableTreeView from '../SortableTreeView';
+import { getTreeFromFlatData } from '../utils';
+import { dynamicData, treeData, extraData } from './data';
 import './index.css';
 
 export default {
@@ -10,57 +13,6 @@ export default {
     layout: 'fullscreen',
   },
 };
-
-const treeData = [
-  {
-    id: '0',
-    label: 'Documents',
-    parent: null,
-    children: [
-      {
-        id: '0-0',
-        label: 'Document 1-1',
-        parent: '0',
-        children: [
-          {
-            id: '0-1-1',
-            label: 'Document-0-1.doc',
-            parent: '0-0',
-            children: [
-              {
-                id: '0-2-2',
-                label: 'Document 2-2',
-                parent: '0-1-1',
-                children: [
-                  {
-                    id: '0-2-3',
-                    label: 'Document-0-3.doc',
-                    parent: '0-2-2',
-                  },
-                  {
-                    id: '0-2-4',
-                    label: 'Document-0-4.doc',
-                    parent: '0-2-2',
-                  },
-                  {
-                    id: '0-2-5',
-                    label: 'Document-0-5.doc',
-                    parent: '0-2-2',
-                  },
-                ],
-              },
-            ],
-          },
-          {
-            id: '0-1-2',
-            label: 'Document-0-2.doc',
-            parent: '0-0',
-          },
-        ],
-      },
-    ],
-  },
-];
 
 const Template = (args) => <SortableTreeView {...args} />;
 
@@ -125,4 +77,40 @@ CanNodeDrop.args = {
   canDrop: ({ destinationParent }) => {
     return !destinationParent ? false : true;
   },
+};
+
+export const DynamicRendering = () => {
+  const [dData, setDData] = useState(dynamicData);
+  const onVisibilityToggle = (node, isCollapsed) => {
+    if (!isCollapsed) {
+      // create add node to path function to replace the expanded node
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          const nodeChildren = extraData.filter((ed) => ed.parent === node.id);
+          setDData([
+            ...dData.map((d) => {
+              if (d.id === node.id) {
+                d.isCollapsed = isCollapsed;
+              }
+              return d;
+            }),
+            ...nodeChildren,
+          ]);
+          resolve();
+        }, 1000);
+      });
+    }
+  };
+  console.log(dData);
+  return (
+    <SortableTreeView
+      treeData={getTreeFromFlatData({
+        flatData: dData,
+        rootKey: null,
+        getKey: (node) => node.id,
+        getParentKey: (node) => node.parent,
+      })}
+      onVisibilityToggle={onVisibilityToggle}
+    />
+  );
 };
