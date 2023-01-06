@@ -28,6 +28,10 @@ declare module 'react-sortable-treeview' {
       prevPath: number[] | string[];
       nextPath: number[] | string[];
     }) => void;
+    onVisibilityToggle: (
+      node: Node,
+      isCollapsed: boolean
+    ) => void | Promise<any>;
     onDragStateChanged: (arg: { isDragging: boolean; node: Node }) => void;
     height: string; // '100%' default
   }> {}

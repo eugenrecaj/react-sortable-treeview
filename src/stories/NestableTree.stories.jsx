@@ -1,6 +1,7 @@
 import React from 'react';
 
 import SortableTreeView from '../SortableTreeView';
+import { treeData } from './data';
 import './index.css';
 
 export default {
@@ -10,57 +11,6 @@ export default {
     layout: 'fullscreen',
   },
 };
-
-const treeData = [
-  {
-    id: '0',
-    label: 'Documents',
-    parent: null,
-    children: [
-      {
-        id: '0-0',
-        label: 'Document 1-1',
-        parent: '0',
-        children: [
-          {
-            id: '0-1-1',
-            label: 'Document-0-1.doc',
-            parent: '0-0',
-            children: [
-              {
-                id: '0-2-2',
-                label: 'Document 2-2',
-                parent: '0-1-1',
-                children: [
-                  {
-                    id: '0-2-3',
-                    label: 'Document-0-3.doc',
-                    parent: '0-2-2',
-                  },
-                  {
-                    id: '0-2-4',
-                    label: 'Document-0-4.doc',
-                    parent: '0-2-2',
-                  },
-                  {
-                    id: '0-2-5',
-                    label: 'Document-0-5.doc',
-                    parent: '0-2-2',
-                  },
-                ],
-              },
-            ],
-          },
-          {
-            id: '0-1-2',
-            label: 'Document-0-2.doc',
-            parent: '0-0',
-          },
-        ],
-      },
-    ],
-  },
-];
 
 const Template = (args) => <SortableTreeView {...args} />;
 
@@ -118,8 +68,8 @@ CustomHandler.args = {
   handler: <div style={handlerStyles} />,
 };
 
-export const CanNodeDrop = Template.bind({});
-CanNodeDrop.args = {
+export const CannotDropToRootNode = Template.bind({});
+CannotDropToRootNode.args = {
   treeData: treeData,
   showDragHandler: true,
   canDrop: ({ destinationParent }) => {

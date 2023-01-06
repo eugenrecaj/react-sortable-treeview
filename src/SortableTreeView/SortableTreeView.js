@@ -29,6 +29,7 @@ class SortableTreeView extends Component {
       isDirty: false,
       canDrop: true,
       onMoveData: null,
+      expandedNodes: [],
     };
 
     this.el = null;
@@ -47,12 +48,13 @@ class SortableTreeView extends Component {
     handler: PropTypes.node,
     showDragHandler: PropTypes.bool,
     idProp: PropTypes.string,
-    treeData: PropTypes.array,
+    treeData: PropTypes.array.isRequired,
     onChange: PropTypes.func,
     renderNode: PropTypes.func,
     draggable: PropTypes.bool,
     showLines: PropTypes.bool,
     onMoveNode: PropTypes.func,
+    onVisibilityToggle: PropTypes.func,
     onDragStateChanged: PropTypes.func,
     height: PropTypes.string,
   };
@@ -67,6 +69,7 @@ class SortableTreeView extends Component {
     onDragStateChanged: () => {},
     renderNode: () => null,
     draggable: true,
+    onVisibilityToggle: null,
     showDragHandler: false,
     showLines: true,
     height: '100%',
@@ -74,15 +77,16 @@ class SortableTreeView extends Component {
   };
 
   componentDidMount() {
-    let { treeData, childrenProp } = this.props;
+    let { treeData, childrenProp, idProp } = this.props;
 
-    treeData = listWithChildren(treeData, childrenProp);
+    treeData = listWithChildren(treeData, childrenProp, idProp);
 
     this.setState({ treeData });
   }
 
   componentDidUpdate(prevProps) {
-    const { treeData: newTreeData, childrenProp } = this.props;
+    const { treeData: newTreeData, childrenProp, idProp } = this.props;
+    const { expandedNodes } = this.state;
     const isPropsUpdated = shallowCompare(
       { props: prevProps, state: {} },
       this.props,
@@ -95,7 +99,12 @@ class SortableTreeView extends Component {
       let extra = {};
 
       this.setState({
-        treeData: listWithChildren(newTreeData, childrenProp),
+        treeData: listWithChildren(
+          newTreeData,
+          childrenProp,
+          idProp,
+          expandedNodes
+        ),
         dragNode: null,
         isDirty: false,
         ...extra,
@@ -608,8 +617,8 @@ class SortableTreeView extends Component {
   };
 
   onToggleCollapse = (node, isGetter) => {
-    let { treeData } = this.state;
-    const { childrenProp, idProp } = this.props;
+    let { treeData, expandedNodes } = this.state;
+    const { childrenProp, idProp, onVisibilityToggle } = this.props;
     const nodePath = this.getPathById(node[idProp]);
 
     function changeCollapsed(obj, isCollapsed) {
@@ -632,6 +641,19 @@ class SortableTreeView extends Component {
       ...node,
     };
 
+    if (!toggledNode.isCollapsed) {
+      this.setState({
+        expandedNodes: [...expandedNodes, toggledNode[idProp]],
+      });
+    } else {
+      const toggledNodeIndex = expandedNodes.findIndex(
+        (en) => en === toggledNode[idProp]
+      );
+      expandedNodes.splice(toggledNodeIndex, 1);
+
+      this.setState({ expandedNodes });
+    }
+
     const insertPath = this.getSplicePath(nodePath, {
       numToRemove: 1,
       treeDataToInsert: [toggledNode],
@@ -639,6 +661,12 @@ class SortableTreeView extends Component {
     });
 
     treeData = update(treeData, insertPath);
+
+    onVisibilityToggle({
+      treeData,
+      node: toggledNode,
+      isCollapsed: toggledNode.isCollapsed,
+    });
 
     if (isGetter) {
       return treeData;
@@ -694,20 +722,22 @@ class SortableTreeView extends Component {
       const nodeParent = this.getNodeByPath(nodePath);
 
       let isNodeLastChild;
+      if (nodeParent) {
+        const nodeIndexIntoParentsChildren = nodeParent[childrenProp].findIndex(
+          (c) => c.id === node.id
+        );
+        if (nodeIndexIntoParentsChildren === -1) {
+          const rootNodeIndex = treeData.findIndex((c) => c.id === node.id);
 
-      const nodeIndexIntoParentsChildren = nodeParent[childrenProp].findIndex(
-        (c) => c.id === node.id
-      );
-      if (nodeIndexIntoParentsChildren === -1) {
-        const rootNodeIndex = treeData.findIndex((c) => c.id === node.id);
+          isNodeLastChild = rootNodeIndex + 1 === treeData.length;
+        } else {
+          isNodeLastChild =
+            nodeIndexIntoParentsChildren + 1 ===
+            nodeParent[childrenProp].length;
+        }
 
-        isNodeLastChild = rootNodeIndex + 1 === treeData.length;
-      } else {
-        isNodeLastChild =
-          nodeIndexIntoParentsChildren + 1 === nodeParent[childrenProp].length;
+        return { isNodeLastChild };
       }
-
-      return { isNodeLastChild };
     }
 
     return { isNodeLastChild: true };
