@@ -1,6 +1,6 @@
 {
   "name": "react-sortable-treeview",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Drag & drop hierarchical nested/sorted list made as a react component",
   "types": "src/index.d.ts",
   "main": "dist/index.js",

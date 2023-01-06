@@ -68,13 +68,22 @@ export const getTransformProps = (x, y) => {
   };
 };
 
-export const listWithChildren = (list, childrenProp) => {
+export const listWithChildren = (list, childrenProp, idProp, expandedNodes) => {
   const addChildren = list.map((item) => {
+    if (expandedNodes?.includes(item[idProp])) {
+      item.isCollapsed = false;
+    }
+
     return {
       ...item,
-      isCollapsed: item.isCollapsed || true,
+      isCollapsed: item.isCollapsed === undefined || item.isCollapsed,
       [childrenProp]: item[childrenProp]
-        ? listWithChildren(item[childrenProp], childrenProp)
+        ? listWithChildren(
+            item[childrenProp],
+            childrenProp,
+            idProp,
+            expandedNodes
+          )
         : [],
     };
   });
@@ -103,7 +112,7 @@ export const addDepthToChildren = (d, childrenProp) => (o) => {
   (o[childrenProp] || []).forEach(addDepthToChildren(d + 1, childrenProp));
 };
 
-export const getFlatDataFromTree = (arr, childrenProp) => {
+export const getFlatDataFromTree = (arr, childrenProp = 'children') => {
   return arr
     ? arr.reduce(
         (result, item) => [

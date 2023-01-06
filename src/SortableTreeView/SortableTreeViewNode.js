@@ -16,7 +16,6 @@ const SortableTreeViewNode = (props) => {
     draggable,
     showLines,
     handler,
-    toggledNode,
   } = options;
 
   const { isCollapsed, depth } = node;
@@ -194,7 +193,6 @@ const SortableTreeViewNode = (props) => {
           renderPlacementArrow={renderPlacementArrow}
           rowProps={rowProps}
           handler={handler}
-          toggledNode={toggledNode}
         />
       </div>
     </div>

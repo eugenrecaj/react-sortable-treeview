@@ -1,9 +1,7 @@
-import { node } from 'prop-types';
-import React, { useState } from 'react';
+import React from 'react';
 
 import SortableTreeView from '../SortableTreeView';
-import { getTreeFromFlatData } from '../utils';
-import { dynamicData, treeData, extraData } from './data';
+import { treeData } from './data';
 import './index.css';
 
 export default {
@@ -70,47 +68,11 @@ CustomHandler.args = {
   handler: <div style={handlerStyles} />,
 };
 
-export const CanNodeDrop = Template.bind({});
-CanNodeDrop.args = {
+export const CannotDropToRootNode = Template.bind({});
+CannotDropToRootNode.args = {
   treeData: treeData,
   showDragHandler: true,
   canDrop: ({ destinationParent }) => {
     return !destinationParent ? false : true;
   },
-};
-
-export const DynamicRendering = () => {
-  const [dData, setDData] = useState(dynamicData);
-  const onVisibilityToggle = (node, isCollapsed) => {
-    if (!isCollapsed) {
-      // create add node to path function to replace the expanded node
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          const nodeChildren = extraData.filter((ed) => ed.parent === node.id);
-          setDData([
-            ...dData.map((d) => {
-              if (d.id === node.id) {
-                d.isCollapsed = isCollapsed;
-              }
-              return d;
-            }),
-            ...nodeChildren,
-          ]);
-          resolve();
-        }, 1000);
-      });
-    }
-  };
-  console.log(dData);
-  return (
-    <SortableTreeView
-      treeData={getTreeFromFlatData({
-        flatData: dData,
-        rootKey: null,
-        getKey: (node) => node.id,
-        getParentKey: (node) => node.parent,
-      })}
-      onVisibilityToggle={onVisibilityToggle}
-    />
-  );
 };

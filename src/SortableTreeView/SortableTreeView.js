@@ -29,7 +29,7 @@ class SortableTreeView extends Component {
       isDirty: false,
       canDrop: true,
       onMoveData: null,
-      toggleNode: null,
+      expandedNodes: [],
     };
 
     this.el = null;
@@ -77,15 +77,16 @@ class SortableTreeView extends Component {
   };
 
   componentDidMount() {
-    let { treeData, childrenProp } = this.props;
+    let { treeData, childrenProp, idProp } = this.props;
 
-    treeData = listWithChildren(treeData, childrenProp);
+    treeData = listWithChildren(treeData, childrenProp, idProp);
 
     this.setState({ treeData });
   }
 
   componentDidUpdate(prevProps) {
-    const { treeData: newTreeData, childrenProp } = this.props;
+    const { treeData: newTreeData, childrenProp, idProp } = this.props;
+    const { expandedNodes } = this.state;
     const isPropsUpdated = shallowCompare(
       { props: prevProps, state: {} },
       this.props,
@@ -98,7 +99,12 @@ class SortableTreeView extends Component {
       let extra = {};
 
       this.setState({
-        treeData: listWithChildren(newTreeData, childrenProp),
+        treeData: listWithChildren(
+          newTreeData,
+          childrenProp,
+          idProp,
+          expandedNodes
+        ),
         dragNode: null,
         isDirty: false,
         ...extra,
@@ -471,7 +477,7 @@ class SortableTreeView extends Component {
       showLines,
       handler,
     } = this.props;
-    const { dragNode, destinationPlacement, canDrop, toggledNode } = this.state;
+    const { dragNode, destinationPlacement, canDrop } = this.state;
 
     return {
       dragNode,
@@ -485,7 +491,6 @@ class SortableTreeView extends Component {
       draggable,
       showLines,
       handler,
-      toggledNode,
 
       onDragStart: this.onDragStart,
       onMouseEnter: this.onMouseEnter,
@@ -611,8 +616,8 @@ class SortableTreeView extends Component {
     this.moveNode({ dragNode, pathFrom, pathTo });
   };
 
-  onToggleCollapse = async (node, isGetter) => {
-    let { treeData } = this.state;
+  onToggleCollapse = (node, isGetter) => {
+    let { treeData, expandedNodes } = this.state;
     const { childrenProp, idProp, onVisibilityToggle } = this.props;
     const nodePath = this.getPathById(node[idProp]);
 
@@ -636,10 +641,17 @@ class SortableTreeView extends Component {
       ...node,
     };
 
-    if (node.hasChildren) {
-      this.setState({ toggledNode });
-      console.log(toggledNode);
-      await onVisibilityToggle(toggledNode, toggledNode.isCollapsed);
+    if (!toggledNode.isCollapsed) {
+      this.setState({
+        expandedNodes: [...expandedNodes, toggledNode[idProp]],
+      });
+    } else {
+      const toggledNodeIndex = expandedNodes.findIndex(
+        (en) => en === toggledNode[idProp]
+      );
+      expandedNodes.splice(toggledNodeIndex, 1);
+
+      this.setState({ expandedNodes });
     }
 
     const insertPath = this.getSplicePath(nodePath, {
@@ -650,11 +662,16 @@ class SortableTreeView extends Component {
 
     treeData = update(treeData, insertPath);
 
+    onVisibilityToggle({
+      treeData,
+      node: toggledNode,
+      isCollapsed: toggledNode.isCollapsed,
+    });
+
     if (isGetter) {
-      this.setState({ toggledNode: null });
       return treeData;
     } else {
-      this.setState({ treeData, toggledNode: null });
+      this.setState({ treeData });
     }
   };
 
@@ -705,20 +722,22 @@ class SortableTreeView extends Component {
       const nodeParent = this.getNodeByPath(nodePath);
 
       let isNodeLastChild;
+      if (nodeParent) {
+        const nodeIndexIntoParentsChildren = nodeParent[childrenProp].findIndex(
+          (c) => c.id === node.id
+        );
+        if (nodeIndexIntoParentsChildren === -1) {
+          const rootNodeIndex = treeData.findIndex((c) => c.id === node.id);
 
-      const nodeIndexIntoParentsChildren = nodeParent[childrenProp].findIndex(
-        (c) => c.id === node.id
-      );
-      if (nodeIndexIntoParentsChildren === -1) {
-        const rootNodeIndex = treeData.findIndex((c) => c.id === node.id);
+          isNodeLastChild = rootNodeIndex + 1 === treeData.length;
+        } else {
+          isNodeLastChild =
+            nodeIndexIntoParentsChildren + 1 ===
+            nodeParent[childrenProp].length;
+        }
 
-        isNodeLastChild = rootNodeIndex + 1 === treeData.length;
-      } else {
-        isNodeLastChild =
-          nodeIndexIntoParentsChildren + 1 === nodeParent[childrenProp].length;
+        return { isNodeLastChild };
       }
-
-      return { isNodeLastChild };
     }
 
     return { isNodeLastChild: true };
@@ -728,8 +747,6 @@ class SortableTreeView extends Component {
     const { group, className, childrenProp, height } = this.props;
     const { treeData, dragNode } = this.state;
     const options = this.getNodeOptions();
-
-    console.log(treeData);
 
     const flatData = getFlatDataFromTree(treeData, childrenProp);
 

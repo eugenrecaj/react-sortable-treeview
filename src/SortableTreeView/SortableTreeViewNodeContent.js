@@ -8,7 +8,6 @@ const renderCollapseIcon = ({
   hasChildren,
   node,
   onToggleCollapse,
-  toggledNode,
 }) =>
   hasChildren ? (
     <div className='rstw-node-icon' onClick={() => onToggleCollapse(node)}>
@@ -16,7 +15,6 @@ const renderCollapseIcon = ({
         className={cx('rstw-icon', {
           'icon-plus-gray': isCollapsed,
           'icon-minus-gray': !isCollapsed,
-          'rstw-spinner': toggledNode?.id === node.id,
         })}
       />
     </div>
@@ -59,7 +57,6 @@ const SortableTreeViewNodeContent = ({
   renderPlacementArrow,
   rowProps,
   handler,
-  toggledNode,
 }) => {
   const renderNodeContent = renderNode({
     node,
@@ -73,7 +70,6 @@ const SortableTreeViewNodeContent = ({
         hasChildren,
         node,
         onToggleCollapse,
-        toggledNode,
       })}
       {dragNode?.id === node?.id &&
         destinationPlacement &&
