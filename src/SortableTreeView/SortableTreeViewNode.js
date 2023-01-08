@@ -16,6 +16,7 @@ const SortableTreeViewNode = (props) => {
     draggable,
     showLines,
     handler,
+    previewPath,
   } = options;
 
   const { isCollapsed, depth } = node;
@@ -23,6 +24,7 @@ const SortableTreeViewNode = (props) => {
   const isDragging = !isCopy && dragNode && dragNode[idProp] === node[idProp];
   const hasChildren =
     (node[childrenProp] && node[childrenProp].length > 0) || node.hasChildren;
+  const previewPathOpt = dragNode?.[idProp] === node?.[idProp] && previewPath;
 
   let rowProps = {};
   let handlerProps = {};
@@ -78,9 +80,9 @@ const SortableTreeViewNode = (props) => {
 
   const renderDepthLines = () => {
     if (!isCopy && showLines) {
-      const nodePath = options.getPathById(node[idProp]);
+      let nodePath = previewPathOpt || options.getPathById(node[idProp]);
 
-      return nodePath.map((path, i) => {
+      return nodePath.map((_, i) => {
         const nodePaths = options.getNodeByPath(nodePath.slice(0, i));
 
         if (nodePaths) {
@@ -103,7 +105,7 @@ const SortableTreeViewNode = (props) => {
   };
 
   const renderLines = () => {
-    if (!isCopy && showLines) {
+    if (!isCopy && showLines && !previewPathOpt) {
       if (isLastChild) {
         return createElement('div', {
           className: 'rstw-lines rstw-halfVerticalLine rstw-fullHotizontalLine',
@@ -121,6 +123,10 @@ const SortableTreeViewNode = (props) => {
   const renderPlacementArrow = () => {
     const { placementHeight } = destinationPlacement;
 
+    if (previewPathOpt?.length > depth) {
+      return null;
+    }
+
     return createElement(
       'div',
       {
@@ -136,7 +142,7 @@ const SortableTreeViewNode = (props) => {
       }),
       createElement('div', {
         style: {
-          width: '60px',
+          width: '30px',
           height: `10px`,
           background: '#4682b4',
           position: 'absolute',
