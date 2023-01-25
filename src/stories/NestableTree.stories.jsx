@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 
-import SortableTreeView from '../SortableTreeView';
-import { treeData } from './data';
+import SortableTreeView, {
+  getTreeFromFlatData,
+  getFlatDataFromTree,
+} from '../index.js';
+import { treeData, flatData } from './data';
 import './index.css';
 
 export default {
@@ -75,4 +78,43 @@ CannotDropToRootNode.args = {
   canDrop: ({ destinationParent }) => {
     return !destinationParent ? false : true;
   },
+};
+
+export const DynamicTree = () => {
+  const [td, setTD] = useState(flatData);
+
+  const addChild = (node) => {
+    const newFlatData = [...td];
+    const newChild = {
+      parent: node.id,
+      label: 'test',
+      id: Math.random().toString(12).slice(2),
+    };
+
+    newFlatData.push(newChild);
+    console.log(newFlatData);
+    setTD(newFlatData);
+  };
+
+  const customDynamicNode = ({ node, dragHandler }) => (
+    <div style={styles}>
+      {dragHandler}
+      <span>{node.label}</span>
+      <button onClick={() => addChild(node)} style={{ marginLeft: '10px' }}>
+        Add child
+      </button>
+    </div>
+  );
+
+  return (
+    <SortableTreeView
+      treeData={getTreeFromFlatData({
+        flatData: td,
+        getKey: (node) => node.id,
+        getParentKey: (node) => node.parent,
+        rootKey: null,
+      })}
+      renderNode={customDynamicNode}
+    />
+  );
 };

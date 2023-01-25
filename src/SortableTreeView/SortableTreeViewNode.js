@@ -59,15 +59,20 @@ const SortableTreeViewNode = (props) => {
 
   const baseClassName = 'rstw-node' + (isCopy ? '-copy' : '');
   const nodeProps = {
-    className: cx(baseClassName, baseClassName + '-' + node[idProp], {
-      'is-dragging on-drag': isDragging,
-      'cannot-drop': !canDrop,
-      [baseClassName + '--last-child']: isLastChild,
-      [baseClassName + '--with--no-children']: !hasChildren,
-      [baseClassName + '--with-children']: hasChildren,
-      [baseClassName + '--children-open']: hasChildren && !isCollapsed,
-      [baseClassName + '--children-collapsed']: hasChildren && isCollapsed,
-    }),
+    className: cx(
+      baseClassName,
+      baseClassName + '-' + node[idProp],
+      `depth-${depth}`,
+      {
+        'is-dragging on-drag': isDragging,
+        'cannot-drop': !canDrop,
+        [baseClassName + '--last-child']: isLastChild,
+        [baseClassName + '--with--no-children']: !hasChildren,
+        [baseClassName + '--with-children']: hasChildren,
+        [baseClassName + '--children-open']: hasChildren && !isCollapsed,
+        [baseClassName + '--children-collapsed']: hasChildren && isCollapsed,
+      }
+    ),
   };
 
   const renderParentLine = () => {
@@ -135,15 +140,7 @@ const SortableTreeViewNode = (props) => {
       createElement('div', {
         style: {
           width: '10px',
-          height: `${placementHeight - 35}px`,
-          background: '#4682b4',
-          position: 'absolute',
-        },
-      }),
-      createElement('div', {
-        style: {
-          width: '30px',
-          height: `10px`,
+          height: `${placementHeight - 65}px`,
           background: '#4682b4',
           position: 'absolute',
         },
@@ -154,7 +151,7 @@ const SortableTreeViewNode = (props) => {
           height: `10px`,
           background: '#4682b4',
           position: 'absolute',
-          marginTop: `${placementHeight - 35}px`,
+          marginTop: `${placementHeight - 65}px`,
         },
       }),
       createElement('div', {
@@ -166,7 +163,7 @@ const SortableTreeViewNode = (props) => {
           borderBottom: '15px solid transparent',
           position: 'absolute',
           marginLeft: '20px',
-          marginTop: `${placementHeight - 45}px`,
+          marginTop: `${placementHeight - 75}px`,
         },
       })
     );
@@ -175,6 +172,7 @@ const SortableTreeViewNode = (props) => {
   return (
     <div
       {...nodeProps}
+      data-selector={depth}
       style={{
         opacity: isCopy ? 0.5 : 1,
         marginLeft: !showLines && !isCopy ? `${(depth + 1) * 40}px` : 0,

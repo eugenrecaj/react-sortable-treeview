@@ -194,27 +194,45 @@ class SortableTreeView extends Component {
         },
       });
     } else {
-      let parentPath = pathFrom.length === 1 ? pathFrom : pathFrom.slice(0, -1);
-      const parentOfDraggedNode = this.getNodeByPath(parentPath);
-      const lastSiblingOfDraggedNodePath =
-        parentOfDraggedNode[childrenProp].at(-1);
       const dragged = document.querySelector('.rstw-node-' + dragNode[idProp]);
+      const nodesContentListBoundingRect = document
+        .querySelector('.rstw-virtualTree > div > div')
+        .getBoundingClientRect();
 
-      const lastSiblingOfDraggedNode = document.querySelector(
-        '.rstw-node-' + lastSiblingOfDraggedNodePath[idProp]
+      let arrowHeight;
+
+      const nodesList = [...document.querySelectorAll('.rstw-node')];
+      const draggedNodeElementIndex = nodesList.findIndex((node) =>
+        node.classList.contains('rstw-node-' + dragNode[idProp])
       );
 
-      const draggedNodeBoundingRect = dragged.getBoundingClientRect();
+      const nodesListPreview = nodesList.slice(
+        nodesList.length - (nodesList.length - draggedNodeElementIndex),
+        nodesList.length
+      );
 
-      const lastSiblingOfDraggedNodeBoundingRect =
-        lastSiblingOfDraggedNode.getBoundingClientRect();
+      const nextDropPosition = nodesListPreview.find(
+        (node) =>
+          Number(node.dataset.selector) <
+          (previewPath?.length || dragNode.depth)
+      );
 
-      const draggedBottom =
-        draggedNodeBoundingRect.top + draggedNodeBoundingRect.height;
-      const lastSiblingOfDraggedNodeElBottom =
-        lastSiblingOfDraggedNodeBoundingRect.top +
-        lastSiblingOfDraggedNodeBoundingRect.height;
-      const arrowHeight = lastSiblingOfDraggedNodeElBottom - draggedBottom;
+      if (nextDropPosition) {
+        const draggedNodeBoundingRect = dragged.getBoundingClientRect();
+        const pathToNodeBoundingRect = nextDropPosition.getBoundingClientRect();
+
+        const draggedBottom =
+          draggedNodeBoundingRect.top + draggedNodeBoundingRect.height;
+        const pathToNodeBoundingRectBottom =
+          pathToNodeBoundingRect.top + pathToNodeBoundingRect.height;
+
+        arrowHeight = pathToNodeBoundingRectBottom - draggedBottom;
+      } else {
+        const draggedNodeBoundingRect = dragged.getBoundingClientRect();
+        console.log(draggedNodeBoundingRect);
+        arrowHeight =
+          nodesContentListBoundingRect.height - draggedNodeBoundingRect.bottom;
+      }
 
       this.setState({
         destinationPlacement: {
@@ -294,37 +312,6 @@ class SortableTreeView extends Component {
         !isLastNode || previewPath ? 'preview' : null
       );
     }
-  };
-
-  getDistanceFromNextSibling = (expandedNode) => {
-    const { idProp, group, childrenProp } = this.props;
-    const pathFrom = this.getPathById(expandedNode[idProp]);
-    const nodeIndex = pathFrom[pathFrom.length - 1];
-
-    const nextSibling = this.getNodeByPath(
-      pathFrom.slice(0, -1).concat(nodeIndex + 1)
-    );
-    if (nextSibling) {
-      const expandedNodeEl = document.querySelector(
-        '.rstw-' + group + ' .rstw-node-' + expandedNode[idProp]
-      );
-      const nextSiblingEl = document.querySelector(
-        '.rstw-' + group + ' .rstw-node-' + nextSibling[idProp]
-      );
-
-      if (nextSiblingEl) {
-        return (
-          nextSiblingEl.getBoundingClientRect().top -
-          expandedNodeEl.getBoundingClientRect().top
-        );
-      }
-
-      const expandedNodeChildrenLength = expandedNode[childrenProp].length + 1;
-
-      return expandedNodeChildrenLength * 60;
-    }
-
-    return 0;
   };
 
   dragApply = () => {
@@ -523,7 +510,6 @@ class SortableTreeView extends Component {
       onMouseEnter: this.onMouseEnter,
       isCollapsed: this.isCollapsed,
       onToggleCollapse: this.onToggleCollapse,
-      getDistanceFromNextSibling: this.getDistanceFromNextSibling,
       getPathById: this.getPathById,
       getNodeByPath: this.getNodeByPath,
       isNodeOfTypeLast: this.isNodeLast,
@@ -652,20 +638,8 @@ class SortableTreeView extends Component {
     const { childrenProp, idProp, onVisibilityToggle } = this.props;
     const nodePath = this.getPathById(node[idProp]);
 
-    function changeCollapsed(obj, isCollapsed) {
-      if (obj[childrenProp]) {
-        for (let i = 0; i < obj[childrenProp].length; i++) {
-          if (!obj.isCollapsed) {
-            obj.isCollapsed = true;
-          }
-
-          changeCollapsed(obj[childrenProp][i], isCollapsed);
-        }
-      }
-    }
-
     if (!node.isCollapsed) {
-      changeCollapsed(node, true);
+      node.isCollapsed = true;
     } else node.isCollapsed = false;
 
     let toggledNode = {
@@ -692,12 +666,14 @@ class SortableTreeView extends Component {
     });
 
     treeData = update(treeData, insertPath);
-
-    onVisibilityToggle({
-      treeData,
-      node: toggledNode,
-      isCollapsed: toggledNode.isCollapsed,
-    });
+    if (onVisibilityToggle) {
+      onVisibilityToggle({
+        treeData,
+        node: toggledNode,
+        isCollapsed: toggledNode.isCollapsed,
+        path: nodePath,
+      });
+    }
 
     if (isGetter) {
       return treeData;
