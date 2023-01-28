@@ -183,6 +183,8 @@ class SortableTreeView extends Component {
         treeData,
         isDirty: true,
         destinationPlacement: null,
+        previewPath: null,
+        previewOriginalPath: null,
         onMoveData: {
           treeData,
           node: dragNode,
@@ -193,6 +195,8 @@ class SortableTreeView extends Component {
           nextPath: realPathTo,
         },
       });
+
+      return { treeData };
     } else {
       const dragged = document.querySelector('.rstw-node-' + dragNode[idProp]);
       const nodesContentListBoundingRect = document
@@ -212,9 +216,7 @@ class SortableTreeView extends Component {
       );
 
       const nextDropPosition = nodesListPreview.find(
-        (node) =>
-          Number(node.dataset.selector) <
-          (previewPath?.length || dragNode.depth)
+        (node) => Number(node.dataset.selector) < pathTo?.length
       );
 
       if (nextDropPosition) {
@@ -229,7 +231,6 @@ class SortableTreeView extends Component {
         arrowHeight = pathToNodeBoundingRectBottom - draggedBottom;
       } else {
         const draggedNodeBoundingRect = dragged.getBoundingClientRect();
-        console.log(draggedNodeBoundingRect);
         arrowHeight =
           nodesContentListBoundingRect.height - draggedNodeBoundingRect.bottom;
       }
@@ -315,17 +316,23 @@ class SortableTreeView extends Component {
   };
 
   dragApply = () => {
-    const { onChange, onMoveNode } = this.props;
-    const {
-      treeData,
-      isDirty,
-      destinationPlacement,
-      onMoveData,
-      previewOriginalPath,
-    } = this.state;
+    const { onMoveNode } = this.props;
+    const { treeData, destinationPlacement, onMoveData, previewOriginalPath } =
+      this.state;
 
     if (onMoveData) {
       onMoveNode({ ...onMoveData });
+    }
+
+    if (destinationPlacement) {
+      const { treeData: newTreeData } = this.moveNode({
+        ...destinationPlacement,
+        pathFrom: previewOriginalPath,
+      });
+
+      this.onTreeDataChange(newTreeData);
+    } else {
+      this.onTreeDataChange(treeData);
     }
 
     this.setState({
@@ -338,14 +345,6 @@ class SortableTreeView extends Component {
       previewOriginalPath: null,
       previewPath: null,
     });
-
-    if (destinationPlacement) {
-      this.moveNode({ ...destinationPlacement, pathFrom: previewOriginalPath });
-    }
-
-    if (isDirty) {
-      onChange(treeData);
-    }
   };
 
   dragRevert = () => {
@@ -359,6 +358,14 @@ class SortableTreeView extends Component {
       canDrop: true,
       destinationPlacement: null,
     });
+  };
+
+  onTreeDataChange = (treeData) => {
+    const { onChange } = this.props;
+
+    if (onChange) {
+      onChange(treeData);
+    }
   };
 
   getPathById = (id, treeData = this.state.treeData) => {

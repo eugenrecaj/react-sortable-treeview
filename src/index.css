@@ -17,6 +17,8 @@
 .rstw-node {
   position: relative;
   width: max-content;
+  display: flex;
+  height: 60px;
 }
 .rstw-node.is-dragging .rstw-list {
   pointer-events: none;
@@ -123,12 +125,6 @@
   margin-top: 61px;
   position: absolute;
   z-index: 1000;
-}
-
-.rstw-node {
-  display: flex;
-  height: 60px;
-  position: relative;
 }
 
 .rstw-row {

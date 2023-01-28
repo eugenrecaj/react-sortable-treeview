@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import SortableTreeView, {
   getTreeFromFlatData,
   getFlatDataFromTree,
-} from '../index.js';
+} from '../../dist/index.es';
 import { treeData, flatData } from './data';
 import './index.css';
 
@@ -83,7 +83,7 @@ CannotDropToRootNode.args = {
 export const DynamicTree = () => {
   const [td, setTD] = useState(flatData);
 
-  const addChild = (node) => {
+  const addNode = (node) => {
     const newFlatData = [...td];
     const newChild = {
       parent: node.id,
@@ -92,16 +92,25 @@ export const DynamicTree = () => {
     };
 
     newFlatData.push(newChild);
-    console.log(newFlatData);
     setTD(newFlatData);
+  };
+
+  const removeNode = (node) => {
+    const newFlatData = [...td];
+    const newTreeFlatData = newFlatData.filter((n) => n.id !== node.id);
+
+    setTD(newTreeFlatData);
   };
 
   const customDynamicNode = ({ node, dragHandler }) => (
     <div style={styles}>
       {dragHandler}
       <span>{node.label}</span>
-      <button onClick={() => addChild(node)} style={{ marginLeft: '10px' }}>
-        Add child
+      <button onClick={() => addNode(node)} style={{ marginLeft: '10px' }}>
+        Add Child
+      </button>
+      <button onClick={() => removeNode(node)} style={{ marginLeft: '10px' }}>
+        Remove Child
       </button>
     </div>
   );
@@ -115,6 +124,9 @@ export const DynamicTree = () => {
         rootKey: null,
       })}
       renderNode={customDynamicNode}
+      onChange={(treeData) => {
+        setTD(getFlatDataFromTree(treeData));
+      }}
     />
   );
 };
