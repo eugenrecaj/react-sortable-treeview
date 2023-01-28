@@ -30,6 +30,8 @@ class SortableTreeView extends Component {
       canDrop: true,
       onMoveData: null,
       expandedNodes: [],
+      previewPath: null,
+      previewOriginalPath: null,
     };
 
     this.el = null;
@@ -134,6 +136,7 @@ class SortableTreeView extends Component {
     type,
     treeData = this.state.treeData
   ) => {
+    const { previewOriginalPath, previewPath } = this.state;
     const { childrenProp, canDrop, idProp } = this.props;
     const dragNodeSize = this.getNodeDepth(dragNode);
 
@@ -151,9 +154,8 @@ class SortableTreeView extends Component {
       (path, index) => path === pathTo[index]
     );
 
-    if (!canNodeDrop || cannotDropParentIntoChild) {
-      this.setState({ canDrop: false });
-      return;
+    if (!canNodeDrop || (cannotDropParentIntoChild && !previewPath)) {
+      return this.setState({ canDrop: false });
     }
 
     if (!this.state.canDrop) {
@@ -169,7 +171,7 @@ class SortableTreeView extends Component {
       const insertPath = this.getSplicePath(realPathTo, {
         numToRemove: 0,
         treeDataToInsert: [
-          { ...dragNode, parent: destinationParent?.id || null },
+          { ...dragNode, parent: destinationParent?.[idProp] || null },
         ],
         childrenProp: childrenProp,
       });
@@ -181,6 +183,8 @@ class SortableTreeView extends Component {
         treeData,
         isDirty: true,
         destinationPlacement: null,
+        previewPath: null,
+        previewOriginalPath: null,
         onMoveData: {
           treeData,
           node: dragNode,
@@ -191,28 +195,45 @@ class SortableTreeView extends Component {
           nextPath: realPathTo,
         },
       });
-    } else {
-      let parentPath = pathFrom.slice(0, -1);
-      const parentOfDraggedNode = this.getNodeByPath(parentPath);
-      const lastSiblingOfDraggedNodePath =
-        parentOfDraggedNode[childrenProp].at(-1);
-      const dragged = document.querySelector('.rstw-node-' + dragNode[idProp]);
 
-      const lastSiblingOfDraggedNode = document.querySelector(
-        '.rstw-node-' + lastSiblingOfDraggedNodePath[idProp]
+      return { treeData };
+    } else {
+      const dragged = document.querySelector('.rstw-node-' + dragNode[idProp]);
+      const nodesContentListBoundingRect = document
+        .querySelector('.rstw-virtualTree > div > div')
+        .getBoundingClientRect();
+
+      let arrowHeight;
+
+      const nodesList = [...document.querySelectorAll('.rstw-node')];
+      const draggedNodeElementIndex = nodesList.findIndex((node) =>
+        node.classList.contains('rstw-node-' + dragNode[idProp])
       );
 
-      const draggedNodeBoundingRect = dragged.getBoundingClientRect();
+      const nodesListPreview = nodesList.slice(
+        nodesList.length - (nodesList.length - draggedNodeElementIndex),
+        nodesList.length
+      );
 
-      const lastSiblingOfDraggedNodeBoundingRect =
-        lastSiblingOfDraggedNode.getBoundingClientRect();
+      const nextDropPosition = nodesListPreview.find(
+        (node) => Number(node.dataset.selector) < pathTo?.length
+      );
 
-      const draggedBottom =
-        draggedNodeBoundingRect.top + draggedNodeBoundingRect.height;
-      const lastSiblingOfDraggedNodeElBottom =
-        lastSiblingOfDraggedNodeBoundingRect.top +
-        lastSiblingOfDraggedNodeBoundingRect.height;
-      const arrowHeight = lastSiblingOfDraggedNodeElBottom - draggedBottom;
+      if (nextDropPosition) {
+        const draggedNodeBoundingRect = dragged.getBoundingClientRect();
+        const pathToNodeBoundingRect = nextDropPosition.getBoundingClientRect();
+
+        const draggedBottom =
+          draggedNodeBoundingRect.top + draggedNodeBoundingRect.height;
+        const pathToNodeBoundingRectBottom =
+          pathToNodeBoundingRect.top + pathToNodeBoundingRect.height;
+
+        arrowHeight = pathToNodeBoundingRectBottom - draggedBottom;
+      } else {
+        const draggedNodeBoundingRect = dragged.getBoundingClientRect();
+        arrowHeight =
+          nodesContentListBoundingRect.height - draggedNodeBoundingRect.bottom;
+      }
 
       this.setState({
         destinationPlacement: {
@@ -221,6 +242,8 @@ class SortableTreeView extends Component {
           pathTo,
           placementHeight: arrowHeight + 60,
         },
+        previewPath: pathFrom.slice(0, -1),
+        previewOriginalPath: previewOriginalPath || pathFrom,
         onMoveData: {
           treeData,
           node: dragNode,
@@ -236,10 +259,13 @@ class SortableTreeView extends Component {
 
   tryIncreaseDepth = (dragNode) => {
     const { idProp, childrenProp } = this.props;
+    const { previewPath, previewOriginalPath } = this.state;
     const pathFrom = this.getPathById(dragNode[idProp]);
     const nodeIndex = pathFrom[pathFrom.length - 1];
+    const areCurrentPathAndOriginalPathEqual =
+      JSON.stringify(previewOriginalPath) === JSON.stringify(previewPath);
 
-    if (nodeIndex > 0) {
+    if (nodeIndex > 0 && (areCurrentPathAndOriginalPathEqual || !previewPath)) {
       const prevSibling = this.getNodeByPath(
         pathFrom.slice(0, -1).concat(nodeIndex - 1)
       );
@@ -253,14 +279,25 @@ class SortableTreeView extends Component {
       if (this.isCollapsed(prevSibling)) {
         updatedTreeData = this.onToggleCollapse(prevSibling, true);
       }
+      this.setState({ previewPath: null, previewOriginalPath: null });
 
       this.moveNode({ dragNode, pathFrom, pathTo }, null, updatedTreeData);
+    } else if (previewOriginalPath) {
+      const originalPath = [...previewOriginalPath];
+
+      const pathTo = originalPath.filter((_, i) => i <= previewPath.length);
+
+      this.moveNode({ dragNode, pathFrom: previewPath, pathTo }, 'preview');
+
+      this.setState({ previewPath: pathTo });
     }
   };
 
   tryDecreaseDepth = (dragNode) => {
-    const { idProp, childrenProp, collapsed } = this.props;
-    const pathFrom = this.getPathById(dragNode[idProp]);
+    const { idProp, childrenProp } = this.props;
+    const { previewPath } = this.state;
+
+    const pathFrom = previewPath || this.getPathById(dragNode[idProp]);
     const nodeIndex = pathFrom[pathFrom.length - 1];
 
     if (pathFrom.length > 1) {
@@ -273,48 +310,29 @@ class SortableTreeView extends Component {
 
       this.moveNode(
         { dragNode, pathFrom, pathTo },
-        isLastNode ? null : 'preview'
+        !isLastNode || previewPath ? 'preview' : null
       );
     }
-  };
-
-  getDistanceFromNextSibling = (expandedNode) => {
-    const { idProp, group, childrenProp } = this.props;
-    const pathFrom = this.getPathById(expandedNode[idProp]);
-    const nodeIndex = pathFrom[pathFrom.length - 1];
-
-    const nextSibling = this.getNodeByPath(
-      pathFrom.slice(0, -1).concat(nodeIndex + 1)
-    );
-    if (nextSibling) {
-      const expandedNodeEl = document.querySelector(
-        '.rstw-' + group + ' .rstw-node-' + expandedNode[idProp]
-      );
-      const nextSiblingEl = document.querySelector(
-        '.rstw-' + group + ' .rstw-node-' + nextSibling[idProp]
-      );
-
-      if (nextSiblingEl) {
-        return (
-          nextSiblingEl.getBoundingClientRect().top -
-          expandedNodeEl.getBoundingClientRect().top
-        );
-      }
-
-      const expandedNodeChildrenLength = expandedNode[childrenProp].length + 1;
-
-      return expandedNodeChildrenLength * 60;
-    }
-
-    return 0;
   };
 
   dragApply = () => {
-    const { onChange, onMoveNode } = this.props;
-    const { treeData, isDirty, destinationPlacement, onMoveData } = this.state;
+    const { onMoveNode } = this.props;
+    const { treeData, destinationPlacement, onMoveData, previewOriginalPath } =
+      this.state;
 
     if (onMoveData) {
       onMoveNode({ ...onMoveData });
+    }
+
+    if (destinationPlacement) {
+      const { treeData: newTreeData } = this.moveNode({
+        ...destinationPlacement,
+        pathFrom: previewOriginalPath,
+      });
+
+      this.onTreeDataChange(newTreeData);
+    } else {
+      this.onTreeDataChange(treeData);
     }
 
     this.setState({
@@ -324,15 +342,9 @@ class SortableTreeView extends Component {
       canDrop: true,
       destinationPlacement: null,
       onMoveData: null,
+      previewOriginalPath: null,
+      previewPath: null,
     });
-
-    if (destinationPlacement) {
-      this.moveNode({ ...destinationPlacement });
-    }
-
-    if (isDirty) {
-      onChange(treeData);
-    }
   };
 
   dragRevert = () => {
@@ -346,6 +358,14 @@ class SortableTreeView extends Component {
       canDrop: true,
       destinationPlacement: null,
     });
+  };
+
+  onTreeDataChange = (treeData) => {
+    const { onChange } = this.props;
+
+    if (onChange) {
+      onChange(treeData);
+    }
   };
 
   getPathById = (id, treeData = this.state.treeData) => {
@@ -477,7 +497,7 @@ class SortableTreeView extends Component {
       showLines,
       handler,
     } = this.props;
-    const { dragNode, destinationPlacement, canDrop } = this.state;
+    const { dragNode, destinationPlacement, canDrop, previewPath } = this.state;
 
     return {
       dragNode,
@@ -491,12 +511,12 @@ class SortableTreeView extends Component {
       draggable,
       showLines,
       handler,
+      previewPath,
 
       onDragStart: this.onDragStart,
       onMouseEnter: this.onMouseEnter,
       isCollapsed: this.isCollapsed,
       onToggleCollapse: this.onToggleCollapse,
-      getDistanceFromNextSibling: this.getDistanceFromNextSibling,
       getPathById: this.getPathById,
       getNodeByPath: this.getNodeByPath,
       isNodeOfTypeLast: this.isNodeLast,
@@ -607,11 +627,15 @@ class SortableTreeView extends Component {
     }
 
     const { idProp } = this.props;
-    const { dragNode } = this.state;
+    const { dragNode, previewPath, previewOriginalPath } = this.state;
     if (dragNode[idProp] === node[idProp]) return;
 
     const pathFrom = this.getPathById(dragNode[idProp]);
     const pathTo = this.getPathById(node[idProp]);
+
+    if (previewPath && previewOriginalPath) {
+      this.setState({ previewPath: null, previewOriginalPath: null });
+    }
 
     this.moveNode({ dragNode, pathFrom, pathTo });
   };
@@ -621,20 +645,8 @@ class SortableTreeView extends Component {
     const { childrenProp, idProp, onVisibilityToggle } = this.props;
     const nodePath = this.getPathById(node[idProp]);
 
-    function changeCollapsed(obj, isCollapsed) {
-      if (obj[childrenProp]) {
-        for (let i = 0; i < obj[childrenProp].length; i++) {
-          if (!obj.isCollapsed) {
-            obj.isCollapsed = true;
-          }
-
-          changeCollapsed(obj[childrenProp][i], isCollapsed);
-        }
-      }
-    }
-
     if (!node.isCollapsed) {
-      changeCollapsed(node, true);
+      node.isCollapsed = true;
     } else node.isCollapsed = false;
 
     let toggledNode = {
@@ -661,12 +673,14 @@ class SortableTreeView extends Component {
     });
 
     treeData = update(treeData, insertPath);
-
-    onVisibilityToggle({
-      treeData,
-      node: toggledNode,
-      isCollapsed: toggledNode.isCollapsed,
-    });
+    if (onVisibilityToggle) {
+      onVisibilityToggle({
+        treeData,
+        node: toggledNode,
+        isCollapsed: toggledNode.isCollapsed,
+        path: nodePath,
+      });
+    }
 
     if (isGetter) {
       return treeData;
@@ -771,6 +785,7 @@ class SortableTreeView extends Component {
           style={{ height }}
           className='rstw-virtualTree'
           data={treeWithoutCollapsedChildren}
+          overscan={50}
           itemContent={(index, node) => {
             const { isNodeLastChild } = this.isNodeLast(node);
 

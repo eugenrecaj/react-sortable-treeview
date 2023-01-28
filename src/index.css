@@ -16,7 +16,9 @@
 
 .rstw-node {
   position: relative;
-  width: fit-content;
+  width: max-content;
+  display: flex;
+  height: 60px;
 }
 .rstw-node.is-dragging .rstw-list {
   pointer-events: none;
@@ -50,15 +52,21 @@
 }
 
 .rstw-node-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   cursor: pointer;
   border: 2px solid;
   border-radius: 50%;
   position: absolute;
-  margin-left: -36px;
+  margin-left: -34px;
   background-color: white;
-  margin-top: 18px;
-  width: 20px;
-  height: 20px;
+  margin-top: 20px;
+  width: 15px;
+  height: 15px;
+}
+.rstw-node-icon:hover {
+  scale: 1.2;
 }
 .rstw-drag-layer {
   position: fixed;
@@ -74,8 +82,8 @@
   padding: 0;
 }
 .rstw-icon {
-  width: 20px;
-  height: 20px;
+  width: 10px;
+  height: 10px;
   background-color: transparent;
   background-position: center center;
   background-repeat: no-repeat;
@@ -111,19 +119,12 @@
 }
 
 .rstw-placementArrow {
-  margin-top: 20px;
   top: 0;
   bottom: 0;
-  margin-left: -60px;
-  margin-top: 25px;
+  margin-left: 10px;
+  margin-top: 61px;
   position: absolute;
   z-index: 1000;
-}
-
-.rstw-node {
-  display: flex;
-  height: 60px;
-  position: relative;
 }
 
 .rstw-row {

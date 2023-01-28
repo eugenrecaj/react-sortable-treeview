@@ -16,6 +16,7 @@ const SortableTreeViewNode = (props) => {
     draggable,
     showLines,
     handler,
+    previewPath,
   } = options;
 
   const { isCollapsed, depth } = node;
@@ -23,6 +24,7 @@ const SortableTreeViewNode = (props) => {
   const isDragging = !isCopy && dragNode && dragNode[idProp] === node[idProp];
   const hasChildren =
     (node[childrenProp] && node[childrenProp].length > 0) || node.hasChildren;
+  const previewPathOpt = dragNode?.[idProp] === node?.[idProp] && previewPath;
 
   let rowProps = {};
   let handlerProps = {};
@@ -57,15 +59,20 @@ const SortableTreeViewNode = (props) => {
 
   const baseClassName = 'rstw-node' + (isCopy ? '-copy' : '');
   const nodeProps = {
-    className: cx(baseClassName, baseClassName + '-' + node[idProp], {
-      'is-dragging on-drag': isDragging,
-      'cannot-drop': !canDrop,
-      [baseClassName + '--last-child']: isLastChild,
-      [baseClassName + '--with--no-children']: !hasChildren,
-      [baseClassName + '--with-children']: hasChildren,
-      [baseClassName + '--children-open']: hasChildren && !isCollapsed,
-      [baseClassName + '--children-collapsed']: hasChildren && isCollapsed,
-    }),
+    className: cx(
+      baseClassName,
+      baseClassName + '-' + node[idProp],
+      `depth-${depth}`,
+      {
+        'is-dragging on-drag': isDragging,
+        'cannot-drop': !canDrop,
+        [baseClassName + '--last-child']: isLastChild,
+        [baseClassName + '--with--no-children']: !hasChildren,
+        [baseClassName + '--with-children']: hasChildren,
+        [baseClassName + '--children-open']: hasChildren && !isCollapsed,
+        [baseClassName + '--children-collapsed']: hasChildren && isCollapsed,
+      }
+    ),
   };
 
   const renderParentLine = () => {
@@ -78,9 +85,9 @@ const SortableTreeViewNode = (props) => {
 
   const renderDepthLines = () => {
     if (!isCopy && showLines) {
-      const nodePath = options.getPathById(node[idProp]);
+      let nodePath = previewPathOpt || options.getPathById(node[idProp]);
 
-      return nodePath.map((path, i) => {
+      return nodePath.map((_, i) => {
         const nodePaths = options.getNodeByPath(nodePath.slice(0, i));
 
         if (nodePaths) {
@@ -103,7 +110,7 @@ const SortableTreeViewNode = (props) => {
   };
 
   const renderLines = () => {
-    if (!isCopy && showLines) {
+    if (!isCopy && showLines && !previewPathOpt) {
       if (isLastChild) {
         return createElement('div', {
           className: 'rstw-lines rstw-halfVerticalLine rstw-fullHotizontalLine',
@@ -121,6 +128,10 @@ const SortableTreeViewNode = (props) => {
   const renderPlacementArrow = () => {
     const { placementHeight } = destinationPlacement;
 
+    if (previewPathOpt?.length > depth) {
+      return null;
+    }
+
     return createElement(
       'div',
       {
@@ -129,15 +140,7 @@ const SortableTreeViewNode = (props) => {
       createElement('div', {
         style: {
           width: '10px',
-          height: `${placementHeight - 35}px`,
-          background: '#4682b4',
-          position: 'absolute',
-        },
-      }),
-      createElement('div', {
-        style: {
-          width: '60px',
-          height: `10px`,
+          height: `${placementHeight - 65}px`,
           background: '#4682b4',
           position: 'absolute',
         },
@@ -148,7 +151,7 @@ const SortableTreeViewNode = (props) => {
           height: `10px`,
           background: '#4682b4',
           position: 'absolute',
-          marginTop: `${placementHeight - 35}px`,
+          marginTop: `${placementHeight - 65}px`,
         },
       }),
       createElement('div', {
@@ -160,7 +163,7 @@ const SortableTreeViewNode = (props) => {
           borderBottom: '15px solid transparent',
           position: 'absolute',
           marginLeft: '20px',
-          marginTop: `${placementHeight - 45}px`,
+          marginTop: `${placementHeight - 75}px`,
         },
       })
     );
@@ -169,6 +172,7 @@ const SortableTreeViewNode = (props) => {
   return (
     <div
       {...nodeProps}
+      data-selector={depth}
       style={{
         opacity: isCopy ? 0.5 : 1,
         marginLeft: !showLines && !isCopy ? `${(depth + 1) * 40}px` : 0,

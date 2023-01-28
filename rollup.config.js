@@ -20,6 +20,7 @@ export default [
       },
     ],
     external: [
+      'react',
       'classnames',
       'prop-types',
       'react-addons-shallow-compare',
