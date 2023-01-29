@@ -497,7 +497,13 @@ class SortableTreeView extends Component {
       showLines,
       handler,
     } = this.props;
-    const { dragNode, destinationPlacement, canDrop, previewPath } = this.state;
+    const {
+      dragNode,
+      destinationPlacement,
+      canDrop,
+      previewPath,
+      previewOriginalPath,
+    } = this.state;
 
     return {
       dragNode,
@@ -512,6 +518,7 @@ class SortableTreeView extends Component {
       showLines,
       handler,
       previewPath,
+      previewOriginalPath,
 
       onDragStart: this.onDragStart,
       onMouseEnter: this.onMouseEnter,

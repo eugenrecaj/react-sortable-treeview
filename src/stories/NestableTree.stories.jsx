@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
 import SortableTreeView, {
   getTreeFromFlatData,
   getFlatDataFromTree,
-} from '../../dist/index.es';
+} from '../';
 import { treeData, flatData } from './data';
 import './index.css';
 

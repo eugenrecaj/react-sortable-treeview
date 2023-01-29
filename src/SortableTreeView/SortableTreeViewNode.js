@@ -17,6 +17,7 @@ const SortableTreeViewNode = (props) => {
     showLines,
     handler,
     previewPath,
+    previewOriginalPath,
   } = options;
 
   const { isCollapsed, depth } = node;
@@ -83,6 +84,36 @@ const SortableTreeViewNode = (props) => {
     return null;
   };
 
+  const renderDepthLinesOnPreview = () => {
+    if (previewOriginalPath && dragNode[idProp] === node[idProp]) {
+      return previewOriginalPath.map((_, i) => {
+        const nodePaths = options.getNodeByPath(
+          previewOriginalPath.slice(0, i)
+        );
+
+        if (nodePaths) {
+          const { isNodeLastChild } = options.isNodeOfTypeLast(nodePaths);
+
+          return createElement('div', {
+            className: `rstw-depthLine rstw-depthLine-preview  ${
+              !isNodeLastChild ? 'rstw-showdepthLine' : undefined
+            }`,
+            key: i,
+            style: {
+              width: '40px',
+              position: 'absolute',
+              marginLeft: (i - 1) * 40,
+            },
+          });
+        }
+
+        return null;
+      });
+    }
+
+    return null;
+  };
+
   const renderDepthLines = () => {
     if (!isCopy && showLines) {
       let nodePath = previewPathOpt || options.getPathById(node[idProp]);
@@ -120,6 +151,11 @@ const SortableTreeViewNode = (props) => {
       return createElement('div', {
         className: 'rstw-lines rstw-fullVerticalLine rstw-fullHotizontalLine',
       });
+    } else if (previewOriginalPath && dragNode[idProp] === node[idProp]) {
+      return createElement('div', {
+        className: 'rstw-lines-preview rstw-fullVerticalLine',
+        style: { marginLeft: (previewOriginalPath.length - 1) * 40 },
+      });
     }
 
     return null;
@@ -127,7 +163,6 @@ const SortableTreeViewNode = (props) => {
 
   const renderPlacementArrow = () => {
     const { placementHeight } = destinationPlacement;
-
     if (previewPathOpt?.length > depth) {
       return null;
     }
@@ -141,7 +176,7 @@ const SortableTreeViewNode = (props) => {
         style: {
           width: '10px',
           height: `${placementHeight - 65}px`,
-          background: '#4682b4',
+          background: !canDrop ? '#e45372' : '#4682b4',
           position: 'absolute',
         },
       }),
@@ -149,7 +184,7 @@ const SortableTreeViewNode = (props) => {
         style: {
           width: '20px',
           height: `10px`,
-          background: '#4682b4',
+          background: !canDrop ? '#e45372' : '#4682b4',
           position: 'absolute',
           marginTop: `${placementHeight - 65}px`,
         },
@@ -159,7 +194,7 @@ const SortableTreeViewNode = (props) => {
           width: 0,
           height: 0,
           borderTop: '15px solid transparent',
-          borderLeft: '25px solid #4682b4',
+          borderLeft: `25px solid ${!canDrop ? '#e45372' : '#4682b4'}`,
           borderBottom: '15px solid transparent',
           position: 'absolute',
           marginLeft: '20px',
@@ -179,6 +214,7 @@ const SortableTreeViewNode = (props) => {
       }}
     >
       <div className='rstw-node'>
+        {renderDepthLinesOnPreview()}
         {renderDepthLines()}
         {renderLines()}
         {renderParentLine()}
