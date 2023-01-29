@@ -148,6 +148,12 @@
   height: 100%;
 }
 
+.rstw-lines-preview {
+  width: 40px;
+  position: absolute;
+  height: 100%;
+}
+
 .rstw-halfVerticalLine:after {
   content: '';
   width: 2px;
@@ -207,8 +213,10 @@
   cursor: pointer;
 }
 
-.rstw-drag-layer .parentLine:after,
-.rstw-drag-layer .rstw-node-icon {
+.rstw-drag-layer .rstw-parentLine:after,
+.rstw-drag-layer .rstw-node-icon,
+.rstw-drag-layer .rstw-depthLine-preview,
+.rstw-drag-layer .rstw-lines-preview {
   opacity: 0;
 }
 .rstw-node.is-dragging {
